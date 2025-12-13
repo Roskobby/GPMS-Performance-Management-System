@@ -36,8 +36,12 @@ class AppProvider extends ChangeNotifier {
   
   // Get or create employee goals for the year
   Future<List<Map<String, dynamic>>> getGoals() async {
+    if (_currentEmployee == null) {
+      throw StateError('No employee is currently logged in');
+    }
+    
     final box = HiveSetup.goalsBox;
-    final key = '${_currentEmployee?.id}_$_currentYear';
+    final key = '${_currentEmployee!.id}_$_currentYear';
     final goals = box.get(key);
     
     if (goals == null) {
@@ -48,16 +52,24 @@ class AppProvider extends ChangeNotifier {
   }
   
   Future<void> saveGoals(List<Map<String, dynamic>> goals) async {
+    if (_currentEmployee == null) {
+      throw StateError('No employee is currently logged in');
+    }
+    
     final box = HiveSetup.goalsBox;
-    final key = '${_currentEmployee?.id}_$_currentYear';
+    final key = '${_currentEmployee!.id}_$_currentYear';
     await box.put(key, goals);
     notifyListeners();
   }
   
   // Get feedback for employee
   Future<List<Map<String, dynamic>>> getFeedback() async {
+    if (_currentEmployee == null) {
+      throw StateError('No employee is currently logged in');
+    }
+    
     final box = HiveSetup.feedbackBox;
-    final key = '${_currentEmployee?.id}_$_currentYear';
+    final key = '${_currentEmployee!.id}_$_currentYear';
     final feedback = box.get(key);
     
     if (feedback == null) {
@@ -68,8 +80,12 @@ class AppProvider extends ChangeNotifier {
   }
   
   Future<void> saveFeedback(Map<String, dynamic> feedback) async {
+    if (_currentEmployee == null) {
+      throw StateError('No employee is currently logged in');
+    }
+    
     final box = HiveSetup.feedbackBox;
-    final key = '${_currentEmployee?.id}_$_currentYear';
+    final key = '${_currentEmployee!.id}_$_currentYear';
     final feedbackList = await getFeedback();
     feedbackList.add(feedback);
     await box.put(key, feedbackList);
@@ -78,8 +94,12 @@ class AppProvider extends ChangeNotifier {
   
   // Get behavioral standards
   Future<Map<String, dynamic>?> getBehavioralStandards() async {
+    if (_currentEmployee == null) {
+      throw StateError('No employee is currently logged in');
+    }
+    
     final box = HiveSetup.behavioralStandardsBox;
-    final key = '${_currentEmployee?.id}_$_currentYear';
+    final key = '${_currentEmployee!.id}_$_currentYear';
     final data = box.get(key);
     
     if (data == null) {
@@ -90,16 +110,24 @@ class AppProvider extends ChangeNotifier {
   }
   
   Future<void> saveBehavioralStandards(Map<String, dynamic> standards) async {
+    if (_currentEmployee == null) {
+      throw StateError('No employee is currently logged in');
+    }
+    
     final box = HiveSetup.behavioralStandardsBox;
-    final key = '${_currentEmployee?.id}_$_currentYear';
+    final key = '${_currentEmployee!.id}_$_currentYear';
     await box.put(key, standards);
     notifyListeners();
   }
   
   // Get professional development
   Future<Map<String, dynamic>?> getProfessionalDevelopment() async {
+    if (_currentEmployee == null) {
+      throw StateError('No employee is currently logged in');
+    }
+    
     final box = HiveSetup.professionalDevelopmentBox;
-    final key = '${_currentEmployee?.id}_$_currentYear';
+    final key = '${_currentEmployee!.id}_$_currentYear';
     final data = box.get(key);
     
     if (data == null) {
@@ -110,16 +138,24 @@ class AppProvider extends ChangeNotifier {
   }
   
   Future<void> saveProfessionalDevelopment(Map<String, dynamic> development) async {
+    if (_currentEmployee == null) {
+      throw StateError('No employee is currently logged in');
+    }
+    
     final box = HiveSetup.professionalDevelopmentBox;
-    final key = '${_currentEmployee?.id}_$_currentYear';
+    final key = '${_currentEmployee!.id}_$_currentYear';
     await box.put(key, development);
     notifyListeners();
   }
   
   // Get appraisal
   Future<Map<String, dynamic>?> getAppraisal() async {
+    if (_currentEmployee == null) {
+      throw StateError('No employee is currently logged in');
+    }
+    
     final box = HiveSetup.appraisalsBox;
-    final key = '${_currentEmployee?.id}_$_currentYear';
+    final key = '${_currentEmployee!.id}_$_currentYear';
     final data = box.get(key);
     
     if (data == null) {
@@ -130,8 +166,12 @@ class AppProvider extends ChangeNotifier {
   }
   
   Future<void> saveAppraisal(Map<String, dynamic> appraisal) async {
+    if (_currentEmployee == null) {
+      throw StateError('No employee is currently logged in');
+    }
+    
     final box = HiveSetup.appraisalsBox;
-    final key = '${_currentEmployee?.id}_$_currentYear';
+    final key = '${_currentEmployee!.id}_$_currentYear';
     await box.put(key, appraisal);
     notifyListeners();
   }

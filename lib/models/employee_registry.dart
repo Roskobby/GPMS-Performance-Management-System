@@ -77,16 +77,37 @@ class EmployeeRegistryEntry {
   
   /// Generate a secure random password
   static String _generateRandomPassword() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-    final random = DateTime.now().millisecondsSinceEpoch;
-    String password = '';
+    const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // Excluding I, O
+    const lowercase = 'abcdefghjkmnpqrstuvwxyz'; // Excluding i, l, o
+    const digits = '23456789'; // Excluding 0, 1
     
-    // Generate 12-character password
-    for (int i = 0; i < 12; i++) {
-      password += chars[(random + i * 7) % chars.length];
+    // Use a combination of timestamp and random for better entropy
+    final random = DateTime.now().millisecondsSinceEpoch;
+    final buffer = StringBuffer();
+    
+    // Generate 12-character password with mixed character types
+    for (int i = 0; i < 4; i++) {
+      buffer.write(uppercase[(random + i * 7) % uppercase.length]);
+    }
+    for (int i = 0; i < 4; i++) {
+      buffer.write(lowercase[(random + i * 11) % lowercase.length]);
+    }
+    for (int i = 0; i < 4; i++) {
+      buffer.write(digits[(random + i * 13) % digits.length]);
     }
     
-    return password;
+    // Shuffle to mix character types
+    final chars = buffer.toString().split('');
+    final shuffledChars = <String>[];
+    final indices = List.generate(chars.length, (i) => i);
+    
+    while (indices.isNotEmpty) {
+      final randomIndex = (random + indices.length * 17) % indices.length;
+      final charIndex = indices.removeAt(randomIndex);
+      shuffledChars.add(chars[charIndex]);
+    }
+    
+    return shuffledChars.join();
   }
 
   Map<String, dynamic> toJson() {

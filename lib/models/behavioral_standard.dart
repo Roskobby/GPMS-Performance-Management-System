@@ -206,6 +206,30 @@ class BehavioralStandard {
       ),
     };
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'employeeId': employeeId,
+      'year': year,
+      'items': items.map((key, value) => MapEntry(key, value.toJson())),
+      'lastUpdated': lastUpdated.toIso8601String(),
+    };
+  }
+
+  factory BehavioralStandard.fromJson(Map<String, dynamic> json) {
+    final itemsMap = (json['items'] as Map<String, dynamic>).map(
+      (key, value) => MapEntry(key, BehavioralItem.fromJson(value as Map<String, dynamic>)),
+    );
+    
+    return BehavioralStandard(
+      id: json['id'] as String,
+      employeeId: json['employeeId'] as String,
+      year: json['year'] as int,
+      items: itemsMap,
+      lastUpdated: DateTime.parse(json['lastUpdated'] as String),
+    );
+  }
 }
 
 class BehavioralItem {
@@ -223,4 +247,22 @@ class BehavioralItem {
     this.selfScore = 0,
     this.managerScore = 0,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'category': category,
+      'statement': statement,
+      'selfScore': selfScore,
+      'managerScore': managerScore,
+    };
+  }
+
+  factory BehavioralItem.fromJson(Map<String, dynamic> json) {
+    return BehavioralItem(
+      category: json['category'] as String,
+      statement: json['statement'] as String,
+      selfScore: json['selfScore'] as int? ?? 0,
+      managerScore: json['managerScore'] as int? ?? 0,
+    );
+  }
 }

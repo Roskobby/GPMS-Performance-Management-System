@@ -40,8 +40,8 @@ class PasswordService {
       return 'Password is required';
     }
     
-    if (password.length < 6) {
-      return 'Password must be at least 6 characters';
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters';
     }
     
     // Check for at least one uppercase letter
@@ -66,8 +66,8 @@ class PasswordService {
   static int getPasswordStrength(String password) {
     int strength = 0;
     
-    if (password.length >= 6) strength++;
     if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
     if (RegExp(r'[A-Z]').hasMatch(password)) strength++;
     if (RegExp(r'[a-z]').hasMatch(password)) strength++;
     if (RegExp(r'[0-9]').hasMatch(password)) strength++;
