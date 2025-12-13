@@ -101,7 +101,7 @@ class Appraisal {
         orElse: () => AppraisalStatus.draft,
       ),
       behavioralStandardId: json['behavioralStandardId'] as String,
-      goalIds: (json['goalIds'] as List).cast<String>(),
+      goalIds: (json['goalIds'] as List?)?.cast<String>() ?? [],
       professionalDevelopmentId: json['professionalDevelopmentId'] as String,
       behavioralScore: (json['behavioralScore'] as num?)?.toDouble() ?? 0.0,
       kpiScore: (json['kpiScore'] as num?)?.toDouble() ?? 0.0,

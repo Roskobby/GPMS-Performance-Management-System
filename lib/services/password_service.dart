@@ -72,7 +72,8 @@ class PasswordService {
     if (RegExp(r'[a-z]').hasMatch(password)) strength++;
     if (RegExp(r'[0-9]').hasMatch(password)) strength++;
     
-    return strength;
+    // Maximum strength is 5
+    return strength > 5 ? 5 : strength;
   }
 
   /// Get password strength label

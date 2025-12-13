@@ -2,6 +2,8 @@
 /// Maps employee numbers to their department, role, and line manager
 /// This database should be maintained by HR and synchronized with the system
 
+import 'dart:math';
+
 class EmployeeRegistry {
   // Deprecated: Use EmployeeRegistryService for actual employee management
   // This static registry is maintained for backwards compatibility only
@@ -75,39 +77,32 @@ class EmployeeRegistryEntry {
     this.passwordChanged = false,
   }) : initialPassword = initialPassword ?? _generateRandomPassword();
   
-  /// Generate a secure random password
+  /// Generate a secure random password using cryptographically secure random number generation
   static String _generateRandomPassword() {
     const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // Excluding I, O
     const lowercase = 'abcdefghjkmnpqrstuvwxyz'; // Excluding i, l, o
     const digits = '23456789'; // Excluding 0, 1
     
-    // Use a combination of timestamp and random for better entropy
-    final random = DateTime.now().millisecondsSinceEpoch;
+    final random = Random.secure();
     final buffer = StringBuffer();
     
     // Generate 12-character password with mixed character types
+    // 4 uppercase + 4 lowercase + 4 digits
     for (int i = 0; i < 4; i++) {
-      buffer.write(uppercase[(random + i * 7) % uppercase.length]);
+      buffer.write(uppercase[random.nextInt(uppercase.length)]);
     }
     for (int i = 0; i < 4; i++) {
-      buffer.write(lowercase[(random + i * 11) % lowercase.length]);
+      buffer.write(lowercase[random.nextInt(lowercase.length)]);
     }
     for (int i = 0; i < 4; i++) {
-      buffer.write(digits[(random + i * 13) % digits.length]);
+      buffer.write(digits[random.nextInt(digits.length)]);
     }
     
     // Shuffle to mix character types
     final chars = buffer.toString().split('');
-    final shuffledChars = <String>[];
-    final indices = List.generate(chars.length, (i) => i);
+    chars.shuffle(random);
     
-    while (indices.isNotEmpty) {
-      final randomIndex = (random + indices.length * 17) % indices.length;
-      final charIndex = indices.removeAt(randomIndex);
-      shuffledChars.add(chars[charIndex]);
-    }
-    
-    return shuffledChars.join();
+    return chars.join();
   }
 
   Map<String, dynamic> toJson() {

@@ -218,9 +218,10 @@ class BehavioralStandard {
   }
 
   factory BehavioralStandard.fromJson(Map<String, dynamic> json) {
-    final itemsMap = (json['items'] as Map<String, dynamic>).map(
+    final itemsData = json['items'] as Map<String, dynamic>?;
+    final itemsMap = itemsData?.map(
       (key, value) => MapEntry(key, BehavioralItem.fromJson(value as Map<String, dynamic>)),
-    );
+    ) ?? <String, BehavioralItem>{};
     
     return BehavioralStandard(
       id: json['id'] as String,
