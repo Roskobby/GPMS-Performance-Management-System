@@ -24,7 +24,6 @@ class _ManagerReviewScreenState extends State<ManagerReviewScreen> {
   late Appraisal _appraisal;
   final TextEditingController _managerCommentsController = TextEditingController();
   bool _isSubmitting = false;
-  bool _hasChanges = false;
 
   List<Map<String, dynamic>> _goals = [];
   List<Map<String, dynamic>> _behavioralStandards = [];
@@ -33,7 +32,7 @@ class _ManagerReviewScreenState extends State<ManagerReviewScreen> {
   void initState() {
     super.initState();
     _appraisal = widget.appraisal;
-    _managerCommentsController.text = _appraisal.managerComments ?? '';
+    _managerCommentsController.text = _appraisal.managerComments ?? ''; // Initialize controller
     _loadData();
     
     // Mark as "In Progress" when manager opens it
@@ -170,7 +169,6 @@ class _ManagerReviewScreenState extends State<ManagerReviewScreen> {
       if (success) {
         setState(() {
           _isSubmitting = false;
-          _hasChanges = false;
         });
 
         if (mounted) {
@@ -364,9 +362,7 @@ class _ManagerReviewScreenState extends State<ManagerReviewScreen> {
                     maxLines: 6,
                     readOnly: !isEditable,
                     onChanged: (_) {
-                      setState(() {
-                        _hasChanges = true;
-                      });
+                      // Manager comment updated
                     },
                   ),
                   if (!isEditable)

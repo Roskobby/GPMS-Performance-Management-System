@@ -1,7 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/appraisal.dart';
 import '../models/appraisal_status.dart';
-import '../utils/hive_setup.dart';
 
 /// Service to manage appraisal workflow and status transitions
 class AppraisalService {

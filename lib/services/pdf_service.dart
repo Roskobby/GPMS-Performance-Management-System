@@ -459,7 +459,9 @@ class PdfService {
             borderRadius: pw.BorderRadius.circular(4),
           ),
           child: pw.Text(
-            appraisal.managerComments ?? 'No comments provided',
+            (appraisal.managerComments != null && appraisal.managerComments!.isNotEmpty)
+                ? appraisal.managerComments! 
+                : 'No comments provided',
             style: const pw.TextStyle(fontSize: 10),
           ),
         ),
