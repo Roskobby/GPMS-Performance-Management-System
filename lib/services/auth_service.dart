@@ -25,7 +25,9 @@ class AuthService {
       final employee = Employee.fromJson(Map<String, dynamic>.from(employeeData));
       
       if (employee.employeeNumber == employeeNumber) {
-        // Check password (in production, use proper hashing)
+        // TODO: SECURITY - Implement password hashing for production
+        // Currently using plain text comparison for development
+        // Recommended: Use bcrypt, argon2, or PBKDF2 for password hashing
         if (employee.password == password) {
           // Save current user
           await _saveCurrentUser(employee);

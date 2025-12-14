@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../services/auth_service.dart';
 
 class BehavioralAssessmentScreen extends StatefulWidget {
   const BehavioralAssessmentScreen({super.key});
@@ -14,6 +15,8 @@ class _BehavioralAssessmentScreenState extends State<BehavioralAssessmentScreen>
   final Map<String, int> _managerScores = {};
   bool _isLoading = true;
   String _mode = 'self'; // 'self' or 'manager'
+  bool _isManager = false;
+  final _authService = AuthService();
 
   // Behavioral standards from the Excel form
   final List<Map<String, dynamic>> _standards = [
@@ -68,6 +71,14 @@ class _BehavioralAssessmentScreenState extends State<BehavioralAssessmentScreen>
   void initState() {
     super.initState();
     _loadAssessment();
+    _checkManagerStatus();
+  }
+
+  Future<void> _checkManagerStatus() async {
+    final isManager = await _authService.isManager();
+    setState(() {
+      _isManager = isManager;
+    });
   }
 
   Future<void> _loadAssessment() async {
@@ -251,7 +262,7 @@ class _BehavioralAssessmentScreenState extends State<BehavioralAssessmentScreen>
                       ),
                       Expanded(
                         child: InkWell(
-                          onTap: () => setState(() => _mode = 'manager'),
+                          onTap: _isManager ? () => setState(() => _mode = 'manager') : null,
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
@@ -267,15 +278,19 @@ class _BehavioralAssessmentScreenState extends State<BehavioralAssessmentScreen>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.supervisor_account,
-                                  color: _mode == 'manager' ? Colors.white : const Color(0xFFE67E22),
+                                  _isManager ? Icons.supervisor_account : Icons.lock,
+                                  color: _mode == 'manager' 
+                                      ? Colors.white 
+                                      : (_isManager ? const Color(0xFFE67E22) : Colors.grey),
                                   size: 20,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Manager Review',
                                   style: TextStyle(
-                                    color: _mode == 'manager' ? Colors.white : const Color(0xFFE67E22),
+                                    color: _mode == 'manager' 
+                                        ? Colors.white 
+                                        : (_isManager ? const Color(0xFFE67E22) : Colors.grey),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -287,6 +302,35 @@ class _BehavioralAssessmentScreenState extends State<BehavioralAssessmentScreen>
                     ],
                   ),
                 ),
+                const SizedBox(height: 8),
+                if (!_isManager)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 16, color: Colors.grey.shade600),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Manager Review is restricted to managers only',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade700,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 16),
 
                 // Standards List
@@ -305,11 +349,13 @@ class _BehavioralAssessmentScreenState extends State<BehavioralAssessmentScreen>
                         standard: standard,
                         score: score,
                         mode: _mode,
+                        isManager: _isManager,
                         onScoreChanged: (newScore) {
                           setState(() {
                             if (_mode == 'self') {
                               _selfScores[key] = newScore;
-                            } else {
+                            } else if (_isManager) {
+                              // Only managers can update manager scores
                               _managerScores[key] = newScore;
                             }
                           });
@@ -366,12 +412,14 @@ class _StandardCard extends StatelessWidget {
   final Map<String, dynamic> standard;
   final int score;
   final String mode;
+  final bool isManager;
   final Function(int) onScoreChanged;
 
   const _StandardCard({
     required this.standard,
     required this.score,
     required this.mode,
+    required this.isManager,
     required this.onScoreChanged,
   });
 
@@ -412,6 +460,8 @@ class _StandardCard extends StatelessWidget {
               children: List.generate(5, (index) {
                 final rating = index + 1;
                 final isSelected = score == rating;
+                // Only allow scoring if in self mode OR if in manager mode AND user is a manager
+                final canScore = mode == 'self' || (mode == 'manager' && isManager);
                 return Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -419,7 +469,7 @@ class _StandardCard extends StatelessWidget {
                       color: isSelected ? color : Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(8),
                       child: InkWell(
-                        onTap: () => onScoreChanged(rating),
+                        onTap: canScore ? () => onScoreChanged(rating) : null,
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 12),

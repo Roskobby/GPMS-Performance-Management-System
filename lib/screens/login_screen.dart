@@ -293,6 +293,9 @@ class _DeveloperLoginDialog extends StatefulWidget {
 
 class _DeveloperLoginDialogState extends State<_DeveloperLoginDialog> {
   final _passwordController = TextEditingController();
+  // TODO: SECURITY WARNING - Hardcoded password should be removed in production
+  // Consider using role-based access from Employee Registry instead
+  // Or move to secure environment variables/encrypted storage
   final _devPassword = 'gpmsadmin2024'; // Change this to your secure password
 
   @override

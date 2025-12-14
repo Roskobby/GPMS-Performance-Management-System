@@ -2,6 +2,8 @@
 /// Maps employee numbers to their department, role, and line manager
 /// This database should be maintained by HR and synchronized with the system
 
+import 'dart:math';
+
 class EmployeeRegistry {
   // Deprecated: Use EmployeeRegistryService for actual employee management
   // This static registry is maintained for backwards compatibility only
@@ -75,18 +77,32 @@ class EmployeeRegistryEntry {
     this.passwordChanged = false,
   }) : initialPassword = initialPassword ?? _generateRandomPassword();
   
-  /// Generate a secure random password
+  /// Generate a secure random password using cryptographically secure random number generation
   static String _generateRandomPassword() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-    final random = DateTime.now().millisecondsSinceEpoch;
-    String password = '';
+    const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // Excluding I, O
+    const lowercase = 'abcdefghjkmnpqrstuvwxyz'; // Excluding i, l, o
+    const digits = '23456789'; // Excluding 0, 1
     
-    // Generate 12-character password
-    for (int i = 0; i < 12; i++) {
-      password += chars[(random + i * 7) % chars.length];
+    final random = Random.secure();
+    final buffer = StringBuffer();
+    
+    // Generate 12-character password with mixed character types
+    // 4 uppercase + 4 lowercase + 4 digits
+    for (int i = 0; i < 4; i++) {
+      buffer.write(uppercase[random.nextInt(uppercase.length)]);
+    }
+    for (int i = 0; i < 4; i++) {
+      buffer.write(lowercase[random.nextInt(lowercase.length)]);
+    }
+    for (int i = 0; i < 4; i++) {
+      buffer.write(digits[random.nextInt(digits.length)]);
     }
     
-    return password;
+    // Shuffle to mix character types
+    final chars = buffer.toString().split('');
+    chars.shuffle(random);
+    
+    return chars.join();
   }
 
   Map<String, dynamic> toJson() {

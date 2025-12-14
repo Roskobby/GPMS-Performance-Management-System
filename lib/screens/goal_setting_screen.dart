@@ -12,6 +12,7 @@ class GoalSettingScreen extends StatefulWidget {
 class _GoalSettingScreenState extends State<GoalSettingScreen> {
   List<Map<String, dynamic>> _goals = [];
   bool _isLoading = true;
+  bool _isSaved = false;
 
   @override
   void initState() {
@@ -26,6 +27,10 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
     setState(() {
       _goals = goals.isEmpty ? _getDefaultGoals() : goals;
       _isLoading = false;
+      // If goals were loaded from storage, they were previously saved
+      _isSaved = goals.isNotEmpty;
+      // Recalculate weights to ensure they're correct
+      _recalculateAllWeights();
     });
   }
 
@@ -108,13 +113,46 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
     final provider = Provider.of<AppProvider>(context, listen: false);
     await provider.saveGoals(_goals);
     
+    setState(() {
+      _isSaved = true;
+    });
+    
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Goals saved successfully!'),
+          content: Text('Goals saved successfully! Tap Edit to make changes.'),
           backgroundColor: Colors.green,
         ),
       );
+    }
+  }
+
+  void _enableEditing() {
+    setState(() {
+      _isSaved = false;
+    });
+  }
+
+  void _recalculateAllWeights() {
+    // Calculate total priority across ALL deliverables in ALL goals
+    int totalPriority = 0;
+    for (var goal in _goals) {
+      final deliverables = goal['deliverables'] as List;
+      for (var d in deliverables) {
+        totalPriority += (d['priority'] as int? ?? 1);
+      }
+    }
+    
+    if (totalPriority == 0) totalPriority = 1;
+    
+    // Update weights for all deliverables across all goals
+    for (var goal in _goals) {
+      final deliverables = goal['deliverables'] as List;
+      for (var deliverable in deliverables) {
+        final priority = deliverable['priority'] as int? ?? 1;
+        final weight = 0.70 * (priority / totalPriority) * 100.0; // As percentage
+        deliverable['weight'] = double.parse(weight.toStringAsFixed(2));
+      }
     }
   }
 
@@ -130,10 +168,18 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
       appBar: AppBar(
         title: const Text('Goal Setting'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveGoals,
-          ),
+          if (_isSaved)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: _enableEditing,
+              tooltip: 'Edit Goals',
+            ),
+          if (!_isSaved)
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _saveGoals,
+              tooltip: 'Save Goals',
+            ),
         ],
       ),
       body: ListView(
@@ -179,21 +225,26 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
             return _GoalCard(
               goal: goal,
               allGoals: _goals,
+              isSaved: _isSaved,
               onUpdate: (updatedGoal) {
                 setState(() {
                   _goals[index] = updatedGoal;
+                  _isSaved = false; // Reset saved state when editing
+                  // Recalculate weights across all goals when any goal changes
+                  _recalculateAllWeights();
                 });
               },
             );
           }),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _saveGoals,
-            child: const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text('Save Goals', style: TextStyle(fontSize: 16)),
+          if (!_isSaved)
+            ElevatedButton(
+              onPressed: _saveGoals,
+              child: const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text('Save Goals', style: TextStyle(fontSize: 16)),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -204,11 +255,13 @@ class _GoalCard extends StatefulWidget {
   final Map<String, dynamic> goal;
   final Function(Map<String, dynamic>) onUpdate;
   final List<Map<String, dynamic>> allGoals;
+  final bool isSaved;
 
   const _GoalCard({
     required this.goal,
     required this.onUpdate,
     required this.allGoals,
+    this.isSaved = false,
   });
 
   @override
@@ -343,6 +396,8 @@ class _GoalCardState extends State<_GoalCard> {
                     hintText: 'Describe the main objective of this goal',
                   ),
                   maxLines: 2,
+                  enabled: !widget.isSaved,
+                  readOnly: widget.isSaved,
                   onChanged: (_) => _updateGoal(),
                 ),
                 const SizedBox(height: 16),
@@ -353,15 +408,16 @@ class _GoalCardState extends State<_GoalCard> {
                       'Deliverables',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: _addDeliverable,
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Add'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE67E22),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
+                    if (!widget.isSaved)
+                      ElevatedButton.icon(
+                        onPressed: _addDeliverable,
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Add'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE67E22),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
                     ),
                   ],
                 ),
@@ -369,6 +425,7 @@ class _GoalCardState extends State<_GoalCard> {
                 ...(widget.goal['deliverables'] as List).map((deliverable) {
                   return _DeliverableItem(
                     deliverable: deliverable,
+                    isSaved: widget.isSaved,
                     onUpdate: (updated) {
                       final deliverables = List<Map<String, dynamic>>.from(
                         widget.goal['deliverables'],
@@ -399,11 +456,13 @@ class _DeliverableItem extends StatefulWidget {
   final Map<String, dynamic> deliverable;
   final Function(Map<String, dynamic>) onUpdate;
   final VoidCallback? onDelete;
+  final bool isSaved;
 
   const _DeliverableItem({
     required this.deliverable,
     required this.onUpdate,
     this.onDelete,
+    this.isSaved = false,
   });
 
   @override
@@ -478,7 +537,7 @@ class _DeliverableItemState extends State<_DeliverableItem> {
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
-                if (widget.onDelete != null) ...[
+                if (widget.onDelete != null && !widget.isSaved) ...[
                   IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red, size: 20),
                     onPressed: widget.onDelete,
@@ -503,7 +562,7 @@ class _DeliverableItemState extends State<_DeliverableItem> {
                     child: ChoiceChip(
                       label: Text('$priority'),
                       selected: isSelected,
-                      onSelected: (selected) {
+                      onSelected: widget.isSaved ? null : (selected) {
                         if (selected) {
                           _updatePriority(priority);
                         }
@@ -537,6 +596,8 @@ class _DeliverableItemState extends State<_DeliverableItem> {
                 hintText: 'What needs to be delivered?',
               ),
               maxLines: 2,
+              enabled: !widget.isSaved,
+              readOnly: widget.isSaved,
               onChanged: (_) => _updateDeliverable(),
             ),
             const SizedBox(height: 8),
@@ -549,6 +610,8 @@ class _DeliverableItemState extends State<_DeliverableItem> {
                 hintText: 'What does success look like?',
               ),
               maxLines: 2,
+              enabled: !widget.isSaved,
+              readOnly: widget.isSaved,
               onChanged: (_) => _updateDeliverable(),
             ),
             const SizedBox(height: 8),

@@ -56,6 +56,28 @@ class Feedback {
       'responseDate': responseDate?.toIso8601String(),
     };
   }
+
+  factory Feedback.fromJson(Map<String, dynamic> json) {
+    return Feedback(
+      id: json['id'] as String,
+      employeeId: json['employeeId'] as String,
+      fromUserId: json['fromUserId'] as String,
+      fromUserName: json['fromUserName'] as String,
+      type: FeedbackType.values.firstWhere(
+        (e) => e.toString() == json['type'],
+        orElse: () => FeedbackType.selfReflection,
+      ),
+      title: json['title'] as String,
+      content: json['content'] as String,
+      date: DateTime.parse(json['date'] as String),
+      tags: (json['tags'] as List?)?.cast<String>() ?? [],
+      rating: json['rating'] as int? ?? 3,
+      employeeResponse: json['employeeResponse'] as String?,
+      responseDate: json['responseDate'] != null
+          ? DateTime.parse(json['responseDate'] as String)
+          : null,
+    );
+  }
 }
 
 enum FeedbackType {

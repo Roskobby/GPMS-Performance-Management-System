@@ -45,4 +45,34 @@ class ProfessionalDevelopment {
   double get totalContribution {
     return selfContribution + teamContribution;
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'employeeId': employeeId,
+      'year': year,
+      'selfDevelopment': selfDevelopment,
+      'selfScore': selfScore,
+      'teamDevelopment': teamDevelopment,
+      'teamScore': teamScore,
+      'selfWeight': selfWeight,
+      'teamWeight': teamWeight,
+      'lastUpdated': lastUpdated.toIso8601String(),
+    };
+  }
+
+  factory ProfessionalDevelopment.fromJson(Map<String, dynamic> json) {
+    return ProfessionalDevelopment(
+      id: json['id'] as String,
+      employeeId: json['employeeId'] as String,
+      year: json['year'] as int,
+      selfDevelopment: json['selfDevelopment'] as String? ?? '',
+      selfScore: json['selfScore'] as int? ?? 0,
+      teamDevelopment: json['teamDevelopment'] as String? ?? '',
+      teamScore: json['teamScore'] as int? ?? 0,
+      selfWeight: (json['selfWeight'] as num?)?.toDouble() ?? 0.35,
+      teamWeight: (json['teamWeight'] as num?)?.toDouble() ?? 0.35,
+      lastUpdated: DateTime.parse(json['lastUpdated'] as String),
+    );
+  }
 }

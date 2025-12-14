@@ -1,6 +1,9 @@
 import 'dart:math';
 
 class PasswordService {
+  /// Maximum password strength score
+  static const int maxPasswordStrength = 5;
+  
   /// Generate a random secure password
   /// Format: 3 uppercase + 3 lowercase + 2 digits = 8 characters
   /// Example: ABCdef12
@@ -40,8 +43,8 @@ class PasswordService {
       return 'Password is required';
     }
     
-    if (password.length < 6) {
-      return 'Password must be at least 6 characters';
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters';
     }
     
     // Check for at least one uppercase letter
@@ -66,13 +69,14 @@ class PasswordService {
   static int getPasswordStrength(String password) {
     int strength = 0;
     
-    if (password.length >= 6) strength++;
     if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
     if (RegExp(r'[A-Z]').hasMatch(password)) strength++;
     if (RegExp(r'[a-z]').hasMatch(password)) strength++;
     if (RegExp(r'[0-9]').hasMatch(password)) strength++;
     
-    return strength;
+    // Ensure strength doesn't exceed maximum
+    return strength > maxPasswordStrength ? maxPasswordStrength : strength;
   }
 
   /// Get password strength label
