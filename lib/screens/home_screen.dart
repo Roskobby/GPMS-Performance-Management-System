@@ -90,6 +90,9 @@ class _DashboardTabState extends State<DashboardTab> {
   Future<void> _loadScores() async {
     final provider = Provider.of<AppProvider>(context, listen: false);
     final employee = provider.currentEmployee;
+    const behavioralStandardsCount = 26;
+    const maxScorePerStandard = 5;
+    const behavioralWeight = 30;
     if (employee == null) {
       setState(() {
         _behavioralScore = 0.0;
@@ -106,8 +109,8 @@ class _DashboardTabState extends State<DashboardTab> {
       final sourceScores = selfScores.isNotEmpty ? selfScores : managerScores;
       if (sourceScores.isNotEmpty) {
         final total = sourceScores.values.fold(0, (sum, score) => sum + score);
-        final maxScore = 26 * 5;
-        _behavioralScore = (total / maxScore) * 30;
+        final maxScore = behavioralStandardsCount * maxScorePerStandard;
+        _behavioralScore = (total / maxScore) * behavioralWeight;
       }
     }
 

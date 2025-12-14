@@ -25,6 +25,9 @@ class _FinalAppraisalScreenState extends State<FinalAppraisalScreen> {
 
   Future<void> _loadAppraisalData() async {
     final provider = Provider.of<AppProvider>(context, listen: false);
+    const behavioralStandardsCount = 26;
+    const maxScorePerStandard = 5;
+    const behavioralWeight = 30;
     
     // Load behavioral standards (use employee self scores; fallback to manager if none)
     final behavioral = await provider.getBehavioralStandards();
@@ -34,8 +37,8 @@ class _FinalAppraisalScreenState extends State<FinalAppraisalScreen> {
       final sourceScores = selfScores.isNotEmpty ? selfScores : managerScores;
       if (sourceScores.isNotEmpty) {
         final total = sourceScores.values.fold(0, (sum, score) => sum + score);
-        final maxScore = 26 * 5; // 26 standards * 5 max score
-        _behavioralScore = (total / maxScore) * 30; // 30% weight
+        final maxScore = behavioralStandardsCount * maxScorePerStandard;
+        _behavioralScore = (total / maxScore) * behavioralWeight; // 30% weight
       }
     }
     
