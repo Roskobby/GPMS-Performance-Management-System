@@ -29,6 +29,8 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
       _isLoading = false;
       // If goals were loaded from storage, they were previously saved
       _isSaved = goals.isNotEmpty;
+      // Recalculate weights to ensure they're correct
+      _recalculateAllWeights();
     });
   }
 
@@ -131,6 +133,29 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
     });
   }
 
+  void _recalculateAllWeights() {
+    // Calculate total priority across ALL deliverables in ALL goals
+    int totalPriority = 0;
+    for (var goal in _goals) {
+      final deliverables = goal['deliverables'] as List;
+      for (var d in deliverables) {
+        totalPriority += (d['priority'] as int? ?? 1);
+      }
+    }
+    
+    if (totalPriority == 0) totalPriority = 1;
+    
+    // Update weights for all deliverables across all goals
+    for (var goal in _goals) {
+      final deliverables = goal['deliverables'] as List;
+      for (var deliverable in deliverables) {
+        final priority = deliverable['priority'] as int? ?? 1;
+        final weight = 0.70 * (priority / totalPriority) * 100.0; // As percentage
+        deliverable['weight'] = double.parse(weight.toStringAsFixed(2));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -205,6 +230,8 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
                 setState(() {
                   _goals[index] = updatedGoal;
                   _isSaved = false; // Reset saved state when editing
+                  // Recalculate weights across all goals when any goal changes
+                  _recalculateAllWeights();
                 });
               },
             );
