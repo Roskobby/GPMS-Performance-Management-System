@@ -304,11 +304,11 @@ class _GoalCardState extends State<_GoalCard> {
       'keyResults': '',
     });
     
-    _recalculateWeights(deliverables);
+    // Don't recalculate here - parent's onUpdate will call _recalculateAllWeights()
     
     final updatedGoal = Map<String, dynamic>.from(widget.goal);
     updatedGoal['deliverables'] = deliverables;
-    widget.onUpdate(updatedGoal);
+    widget.onUpdate(updatedGoal); // This triggers parent to recalculate ALL weights
     
     setState(() {});
   }
@@ -333,38 +333,17 @@ class _GoalCardState extends State<_GoalCard> {
       deliverables[i]['number'] = i + 1;
     }
     
-    _recalculateWeights(deliverables);
+    // Don't recalculate here - parent's onUpdate will call _recalculateAllWeights()
     
     final updatedGoal = Map<String, dynamic>.from(widget.goal);
     updatedGoal['deliverables'] = deliverables;
-    widget.onUpdate(updatedGoal);
+    widget.onUpdate(updatedGoal); // This triggers parent to recalculate ALL weights
     
     setState(() {});
   }
   
-  void _recalculateWeights(List<Map<String, dynamic>> deliverables) {
-    if (deliverables.isEmpty) return;
-    
-    // Calculate total priority across ALL goals (not just this goal)
-    int totalPriority = 0;
-    for (var goal in widget.allGoals) {
-      final goalDeliverables = goal['deliverables'] as List;
-      for (var d in goalDeliverables) {
-        totalPriority += (d['priority'] as int? ?? 1);
-      }
-    }
-    
-    if (totalPriority == 0) totalPriority = 1;
-    
-    // Calculate weights based on priority
-    // Formula: Weight = 70% × Priority ÷ Sum(All Priorities)
-    // This ensures all deliverables across all goals sum to 70%
-    for (var deliverable in deliverables) {
-      final priority = deliverable['priority'] as int? ?? 1;
-      final weight = 0.70 * (priority / totalPriority) * 100.0; // As percentage
-      deliverable['weight'] = double.parse(weight.toStringAsFixed(2));
-    }
-  }
+  // Weight recalculation is handled by the parent widget's _recalculateAllWeights() method
+  // which is called automatically when onUpdate() is triggered
 
   @override
   Widget build(BuildContext context) {
