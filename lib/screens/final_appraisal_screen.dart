@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
+import '../utils/appraisal_constants.dart';
 
 class FinalAppraisalScreen extends StatefulWidget {
   const FinalAppraisalScreen({super.key});
@@ -25,9 +26,6 @@ class _FinalAppraisalScreenState extends State<FinalAppraisalScreen> {
 
   Future<void> _loadAppraisalData() async {
     final provider = Provider.of<AppProvider>(context, listen: false);
-    const behavioralStandardsCount = 26;
-    const maxScorePerStandard = 5;
-    const behavioralWeight = 30;
     
     // Load behavioral standards (use employee self scores; fallback to manager if none)
     final behavioral = await provider.getBehavioralStandards();
@@ -37,8 +35,8 @@ class _FinalAppraisalScreenState extends State<FinalAppraisalScreen> {
       final sourceScores = selfScores.isNotEmpty ? selfScores : managerScores;
       if (sourceScores.isNotEmpty) {
         final total = sourceScores.values.fold(0, (sum, score) => sum + score);
-        final maxScore = behavioralStandardsCount * maxScorePerStandard;
-        _behavioralScore = (total / maxScore) * behavioralWeight; // 30% weight
+        final maxScore = AppraisalConstants.behavioralStandardsCount * AppraisalConstants.maxScorePerStandard;
+        _behavioralScore = (total / maxScore) * AppraisalConstants.behavioralWeight; // 30% weight
       }
     }
     

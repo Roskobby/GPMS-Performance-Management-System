@@ -11,6 +11,7 @@ import 'final_appraisal_screen.dart';
 import 'change_password_screen.dart';
 import 'login_screen.dart';
 import 'help_screen.dart';
+import '../utils/appraisal_constants.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -90,9 +91,6 @@ class _DashboardTabState extends State<DashboardTab> {
   Future<void> _loadScores() async {
     final provider = Provider.of<AppProvider>(context, listen: false);
     final employee = provider.currentEmployee;
-    const behavioralStandardsCount = 26;
-    const maxScorePerStandard = 5;
-    const behavioralWeight = 30;
     if (employee == null) {
       setState(() {
         _behavioralScore = 0.0;
@@ -109,8 +107,8 @@ class _DashboardTabState extends State<DashboardTab> {
       final sourceScores = selfScores.isNotEmpty ? selfScores : managerScores;
       if (sourceScores.isNotEmpty) {
         final total = sourceScores.values.fold(0, (sum, score) => sum + score);
-        final maxScore = behavioralStandardsCount * maxScorePerStandard;
-        _behavioralScore = (total / maxScore) * behavioralWeight;
+        final maxScore = AppraisalConstants.behavioralStandardsCount * AppraisalConstants.maxScorePerStandard;
+        _behavioralScore = (total / maxScore) * AppraisalConstants.behavioralWeight;
       }
     }
 
