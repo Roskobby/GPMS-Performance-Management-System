@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../services/appraisal_service.dart';
+import '../services/pdf_service.dart';
 import '../models/appraisal.dart';
 import '../models/appraisal_status.dart';
 import '../widgets/status_badge.dart';
@@ -81,6 +82,50 @@ class _ManagerReviewScreenState extends State<ManagerReviewScreen> {
       _goals = goals;
       _behavioralStandards = behavioral;
     });
+  }
+
+  Future<void> _exportPdf() async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Generate and download PDF
+      await PdfService.downloadPdf(
+        appraisal: _appraisal,
+        goals: _goals,
+        behavioralStandards: _behavioralStandards,
+      );
+
+      // Close loading indicator
+      if (mounted) {
+        Navigator.pop(context);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('PDF exported successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading indicator
+      if (mounted) {
+        Navigator.pop(context);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error exporting PDF: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _submitToHR() async {
@@ -167,6 +212,12 @@ class _ManagerReviewScreenState extends State<ManagerReviewScreen> {
       appBar: AppBar(
         title: Text('Review: ${_appraisal.employeeName}'),
         actions: [
+          // PDF Export Button
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            onPressed: _exportPdf,
+            tooltip: 'Export PDF',
+          ),
           if (isEditable && !_isSubmitting)
             IconButton(
               icon: const Icon(Icons.check_circle),

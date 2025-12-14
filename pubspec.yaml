@@ -48,6 +48,10 @@ dependencies:
   # File handling for Excel/CSV import
   file_picker: ^8.1.4
   csv: ^6.0.0
+  
+  # PDF Generation
+  pdf: ^3.11.1
+  printing: ^5.13.4
 
 dev_dependencies:
   flutter_test:
