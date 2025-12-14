@@ -6,6 +6,7 @@ import '../services/auth_service.dart';
 import '../models/appraisal.dart';
 import '../models/appraisal_status.dart';
 import '../widgets/status_badge.dart';
+import 'manager_review_screen.dart';
 
 class TeamAppraisalsScreen extends StatefulWidget {
   const TeamAppraisalsScreen({super.key});
@@ -213,14 +214,19 @@ class _TeamAppraisalsScreenState extends State<TeamAppraisalsScreen> {
                   final appraisal = _filteredAppraisals[index];
                   return _AppraisalCard(
                     appraisal: appraisal,
-                    onTap: () {
-                      // TODO: Navigate to manager review screen
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Manager review for ${appraisal.employeeName} - Coming in Phase 4'),
-                          duration: const Duration(seconds: 2),
+                    onTap: () async {
+                      // Navigate to manager review screen
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ManagerReviewScreen(appraisal: appraisal),
                         ),
                       );
+                      
+                      // Refresh list if appraisal was updated
+                      if (result == true) {
+                        _loadTeamAppraisals();
+                      }
                     },
                   );
                 },

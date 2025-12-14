@@ -195,4 +195,39 @@ class AppProvider extends ChangeNotifier {
     await box.put(key, appraisal);
     notifyListeners();
   }
+  
+  // Get goals for a specific employee (for managers reviewing)
+  Future<List<Map<String, dynamic>>> getGoalsForEmployee(String employeeId) async {
+    final box = HiveSetup.goalsBox;
+    final key = '${employeeId}_$_currentYear';
+    final data = box.get(key);
+    
+    if (data == null) {
+      return [];
+    }
+    
+    return List<Map<String, dynamic>>.from(data);
+  }
+  
+  // Get behavioral standards for a specific employee (for managers reviewing)
+  Future<List<Map<String, dynamic>>> getBehavioralStandardsForEmployee(String employeeId) async {
+    final box = HiveSetup.behavioralStandardsBox;
+    final key = '${employeeId}_$_currentYear';
+    final data = box.get(key);
+    
+    if (data == null) {
+      return [];
+    }
+    
+    // Convert from Map to List of standards
+    final standards = Map<String, dynamic>.from(data);
+    final standardsList = <Map<String, dynamic>>[];
+    
+    // Extract standards array if it exists
+    if (standards['standards'] != null) {
+      standardsList.addAll(List<Map<String, dynamic>>.from(standards['standards']));
+    }
+    
+    return standardsList;
+  }
 }
