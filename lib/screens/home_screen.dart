@@ -69,8 +69,68 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class DashboardTab extends StatelessWidget {
+class DashboardTab extends StatefulWidget {
   const DashboardTab({super.key});
+
+  @override
+  State<DashboardTab> createState() => _DashboardTabState();
+}
+
+class _DashboardTabState extends State<DashboardTab> {
+  double _behavioralScore = 0.0;
+  double _kpiScore = 0.0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadScores();
+  }
+
+  Future<void> _loadScores() async {
+    final provider = Provider.of<AppProvider>(context, listen: false);
+    final employee = provider.currentEmployee;
+    if (employee == null) {
+      setState(() {
+        _behavioralScore = 0.0;
+        _kpiScore = 0.0;
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final behavioral = await provider.getBehavioralStandards();
+    if (behavioral != null) {
+      final selfScores = Map<String, int>.from(behavioral['selfScores'] ?? {});
+      final managerScores = Map<String, int>.from(behavioral['managerScores'] ?? {});
+      final sourceScores = selfScores.isNotEmpty ? selfScores : managerScores;
+      if (sourceScores.isNotEmpty) {
+        final total = sourceScores.values.fold(0, (sum, score) => sum + score);
+        final maxScore = 26 * 5;
+        _behavioralScore = (total / maxScore) * 30;
+      }
+    }
+
+    final goals = await provider.getGoals();
+    if (goals.isNotEmpty) {
+      double total = 0.0;
+      for (var goal in goals) {
+        final deliverables = goal['deliverables'] as List;
+        for (var d in deliverables) {
+          final score = d['selfScore'] ?? d['managerScore'] ?? 0;
+          final weight = d['weight'] ?? 0.0;
+          total += (score * weight) / 100;
+        }
+      }
+      _kpiScore = total;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -182,23 +242,28 @@ class DashboardTab extends StatelessWidget {
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            const Expanded(
+                            Expanded(
                               child: _PerformanceIndicator(
                                 label: 'Behavioral',
-                                percentage: 0.0,
-                                color: Color(0xFF3B6BA6), // GPMS Blue
+                                percentage: _behavioralScore,
+                                color: const Color(0xFF3B6BA6), // GPMS Blue
                               ),
                             ),
                             const SizedBox(width: 16),
-                            const Expanded(
+                            Expanded(
                               child: _PerformanceIndicator(
                                 label: 'KPI',
-                                percentage: 0.0,
-                                color: Color(0xFFE67E22), // GPMS Orange
+                                percentage: _kpiScore,
+                                color: const Color(0xFFE67E22), // GPMS Orange
                               ),
                             ),
                           ],
                         ),
+                        if (_isLoading)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 12),
+                            child: LinearProgressIndicator(minHeight: 4),
+                          ),
                       ],
                     ),
                   ),

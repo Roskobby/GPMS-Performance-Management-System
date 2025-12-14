@@ -26,25 +26,27 @@ class _FinalAppraisalScreenState extends State<FinalAppraisalScreen> {
   Future<void> _loadAppraisalData() async {
     final provider = Provider.of<AppProvider>(context, listen: false);
     
-    // Load behavioral standards
+    // Load behavioral standards (use employee self scores; fallback to manager if none)
     final behavioral = await provider.getBehavioralStandards();
     if (behavioral != null) {
+      final selfScores = Map<String, int>.from(behavioral['selfScores'] ?? {});
       final managerScores = Map<String, int>.from(behavioral['managerScores'] ?? {});
-      if (managerScores.isNotEmpty) {
-        final total = managerScores.values.fold(0, (sum, score) => sum + score);
+      final sourceScores = selfScores.isNotEmpty ? selfScores : managerScores;
+      if (sourceScores.isNotEmpty) {
+        final total = sourceScores.values.fold(0, (sum, score) => sum + score);
         final maxScore = 26 * 5; // 26 standards * 5 max score
         _behavioralScore = (total / maxScore) * 30; // 30% weight
       }
     }
     
-    // Load KPI scores
+    // Load KPI scores (use employee self scores; fallback to manager if none)
     final goals = await provider.getGoals();
     if (goals.isNotEmpty) {
       double totalScore = 0.0;
       for (var goal in goals) {
         final deliverables = goal['deliverables'] as List;
         for (var d in deliverables) {
-          final score = d['managerScore'] ?? 0;
+          final score = d['selfScore'] ?? d['managerScore'] ?? 0;
           final weight = d['weight'] ?? 0.0;
           totalScore += (score * weight) / 100;
         }
