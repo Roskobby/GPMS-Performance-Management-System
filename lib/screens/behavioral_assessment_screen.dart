@@ -196,15 +196,17 @@ class _BehavioralAssessmentScreenState extends State<BehavioralAssessmentScreen>
                             score: selfScore,
                             color: Colors.white,
                           ),
-                          const SizedBox(
-                            height: 40,
-                            child: VerticalDivider(color: Colors.white30, thickness: 2),
-                          ),
-                          _ScoreDisplay(
-                            label: 'Manager Assessment',
-                            score: managerScore,
-                            color: const Color(0xFFE67E22),
-                          ),
+                          if (_isManager) ...[
+                            const SizedBox(
+                              height: 40,
+                              child: VerticalDivider(color: Colors.white30, thickness: 2),
+                            ),
+                            _ScoreDisplay(
+                              label: 'Manager Assessment',
+                              score: managerScore,
+                              color: const Color(0xFFE67E22),
+                            ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -216,122 +218,96 @@ class _BehavioralAssessmentScreenState extends State<BehavioralAssessmentScreen>
                   ),
                 ),
 
-                // Mode Selector
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFF3B6BA6)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => setState(() => _mode = 'self'),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: _mode == 'self'
-                                  ? const Color(0xFF3B6BA6)
-                                  : Colors.transparent,
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(7),
-                                bottomLeft: Radius.circular(7),
+                if (_isManager) ...[
+                  // Mode Selector
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFF3B6BA6)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setState(() => _mode = 'self'),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: _mode == 'self'
+                                    ? const Color(0xFF3B6BA6)
+                                    : Colors.transparent,
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(7),
+                                  bottomLeft: Radius.circular(7),
+                                ),
                               ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.person,
-                                  color: _mode == 'self' ? Colors.white : const Color(0xFF3B6BA6),
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Self Assessment',
-                                  style: TextStyle(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.person,
                                     color: _mode == 'self' ? Colors.white : const Color(0xFF3B6BA6),
-                                    fontWeight: FontWeight.bold,
+                                    size: 20,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Self Assessment',
+                                    style: TextStyle(
+                                      color: _mode == 'self' ? Colors.white : const Color(0xFF3B6BA6),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: InkWell(
-                          onTap: _isManager ? () => setState(() => _mode = 'manager') : null,
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: _mode == 'manager'
-                                  ? const Color(0xFFE67E22)
-                                  : Colors.transparent,
-                              borderRadius: const BorderRadius.only(
-                                topRight: Radius.circular(7),
-                                bottomRight: Radius.circular(7),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  _isManager ? Icons.supervisor_account : Icons.lock,
-                                  color: _mode == 'manager' 
-                                      ? Colors.white 
-                                      : (_isManager ? const Color(0xFFE67E22) : Colors.grey),
-                                  size: 20,
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setState(() => _mode = 'manager'),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: _mode == 'manager'
+                                    ? const Color(0xFFE67E22)
+                                    : Colors.transparent,
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(7),
+                                  bottomRight: Radius.circular(7),
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Manager Review',
-                                  style: TextStyle(
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.supervisor_account,
                                     color: _mode == 'manager' 
                                         ? Colors.white 
-                                        : (_isManager ? const Color(0xFFE67E22) : Colors.grey),
-                                    fontWeight: FontWeight.bold,
+                                        : const Color(0xFFE67E22),
+                                    size: 20,
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (!_isManager)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.info_outline, size: 16, color: Colors.grey.shade600),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Manager Review is restricted to managers only',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey.shade700,
-                                fontStyle: FontStyle.italic,
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Manager Review',
+                                    style: TextStyle(
+                                      color: _mode == 'manager' 
+                                          ? Colors.white 
+                                          : const Color(0xFFE67E22),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
+                ],
+                if (!_isManager) const SizedBox(height: 16),
 
                 // Standards List
                 Expanded(
