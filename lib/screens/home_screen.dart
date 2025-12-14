@@ -11,6 +11,7 @@ import 'final_appraisal_screen.dart';
 import 'change_password_screen.dart';
 import 'login_screen.dart';
 import 'help_screen.dart';
+import 'team_appraisals_screen.dart';
 import '../utils/appraisal_constants.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -81,11 +82,21 @@ class _DashboardTabState extends State<DashboardTab> {
   double _behavioralScore = 0.0;
   double _kpiScore = 0.0;
   bool _isLoading = true;
+  bool _isManager = false;
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
     _loadScores();
+    _checkManagerStatus();
+  }
+
+  Future<void> _checkManagerStatus() async {
+    final isManager = await _authService.isManager();
+    setState(() {
+      _isManager = isManager;
+    });
   }
 
   Future<void> _loadScores() async {
@@ -298,6 +309,29 @@ class _DashboardTabState extends State<DashboardTab> {
                   ],
                 ),
                 const SizedBox(height: 16),
+
+                // Manager Section (Only for managers)
+                if (_isManager) ...[
+                  _SectionCard(
+                    title: 'Manager Portal',
+                    icon: Icons.people,
+                    color: const Color(0xFF9B59B6), // Purple for manager section
+                    items: [
+                      _ActionItem(
+                        title: 'Team Appraisals',
+                        subtitle: 'Review and approve team member appraisals',
+                        icon: Icons.assignment_turned_in,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const TeamAppraisalsScreen()),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 // Throughout the Year
                 _SectionCard(

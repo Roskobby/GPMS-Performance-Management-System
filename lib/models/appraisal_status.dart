@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// Workflow status for performance appraisals
 enum AppraisalStatus {
   /// Employee is still working on self-assessment
@@ -28,6 +30,12 @@ extension AppraisalStatusExtension on AppraisalStatus {
         return 'Submitted to HR';
     }
   }
+  
+  /// Short label for the status (alias for displayText)
+  String get label => displayText;
+  
+  /// Color object for status
+  Color get color => Color(colorValue);
   
   /// Color for status badge
   int get colorValue {
