@@ -398,27 +398,29 @@ class _KPIReviewScreenState extends State<KPIReviewScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(
-                            height: 40,
-                            child: VerticalDivider(color: Colors.white30, thickness: 2),
-                          ),
-                          Column(
-                            children: [
-                              const Text(
-                                'Manager Assessment',
-                                style: TextStyle(color: Colors.white, fontSize: 12),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '${managerScore.toStringAsFixed(1)}%',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
+                          if (_isManager) ...[
+                            const SizedBox(
+                              height: 40,
+                              child: VerticalDivider(color: Colors.white30, thickness: 2),
+                            ),
+                            Column(
+                              children: [
+                                const Text(
+                                  'Manager Assessment',
+                                  style: TextStyle(color: Colors.white, fontSize: 12),
                                 ),
-                              ),
-                            ],
-                          ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${managerScore.toStringAsFixed(1)}%',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -677,56 +679,46 @@ class _DeliverableReviewItemState extends State<_DeliverableReviewItem> {
               }),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Manager Assessment',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFE67E22)),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: List.generate(5, (index) {
-                final rating = index + 1;
-                final isSelected = (widget.deliverable['managerScore'] ?? 0) == rating;
-                // Only allow managers to score
-                final canScore = widget.isManager && !widget.isReadOnly;
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    child: Material(
-                      color: isSelected ? const Color(0xFFE67E22) : Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(4),
-                      child: InkWell(
-                        onTap: canScore ? () => _updateScore('manager', rating) : null,
+            if (widget.isManager) ...[
+              const Text(
+                'Manager Assessment',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFE67E22)),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: List.generate(5, (index) {
+                  final rating = index + 1;
+                  final isSelected = (widget.deliverable['managerScore'] ?? 0) == rating;
+                  // Only allow managers to score
+                  final canScore = widget.isManager && !widget.isReadOnly;
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: Material(
+                        color: isSelected ? const Color(0xFFE67E22) : Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(4),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Text(
-                            rating.toString(),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.grey.shade600,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              fontSize: 12,
+                        child: InkWell(
+                          onTap: canScore ? () => _updateScore('manager', rating) : null,
+                          borderRadius: BorderRadius.circular(4),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Text(
+                              rating.toString(),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : Colors.grey.shade600,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              }),
-            ),
-            if (!widget.isManager)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  'Only managers can provide assessment scores',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
+                  );
+                }),
               ),
+            ],
           ],
         ),
       ),
