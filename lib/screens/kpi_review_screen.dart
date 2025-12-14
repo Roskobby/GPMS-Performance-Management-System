@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../services/auth_service.dart';
 
 class KPIReviewScreen extends StatefulWidget {
   const KPIReviewScreen({super.key});
@@ -13,11 +14,21 @@ class _KPIReviewScreenState extends State<KPIReviewScreen> {
   List<Map<String, dynamic>> _goals = [];
   bool _isLoading = true;
   bool _isSaved = false;
+  bool _isManager = false;
+  final _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
     _loadGoals();
+    _checkManagerStatus();
+  }
+
+  Future<void> _checkManagerStatus() async {
+    final isManager = await _authService.isManager();
+    setState(() {
+      _isManager = isManager;
+    });
   }
 
   Future<void> _loadGoals() async {
@@ -394,6 +405,7 @@ class _KPIReviewScreenState extends State<KPIReviewScreen> {
                       return _GoalReviewCard(
                         goal: _goals[index],
                         isSaved: _isSaved,
+                        isManager: _isManager,
                         onUpdate: (updatedGoal) {
                           setState(() {
                             _goals[index] = updatedGoal;
@@ -419,11 +431,13 @@ class _GoalReviewCard extends StatefulWidget {
   final Map<String, dynamic> goal;
   final Function(Map<String, dynamic>) onUpdate;
   final bool isSaved;
+  final bool isManager;
 
   const _GoalReviewCard({
     required this.goal,
     required this.onUpdate,
     this.isSaved = false,
+    this.isManager = false,
   });
 
   @override
@@ -460,6 +474,7 @@ class _GoalReviewCardState extends State<_GoalReviewCard> {
                   return _DeliverableReviewItem(
                     deliverable: deliverable,
                     isReadOnly: widget.isSaved,
+                    isManager: widget.isManager,
                     onUpdate: (updated) {
                       final deliverables = List<Map<String, dynamic>>.from(
                         widget.goal['deliverables'],
@@ -489,11 +504,13 @@ class _DeliverableReviewItem extends StatefulWidget {
   final Map<String, dynamic> deliverable;
   final Function(Map<String, dynamic>) onUpdate;
   final bool isReadOnly;
+  final bool isManager;
 
   const _DeliverableReviewItem({
     required this.deliverable,
     required this.onUpdate,
     this.isReadOnly = false,
+    this.isManager = false,
   });
 
   @override
@@ -640,6 +657,8 @@ class _DeliverableReviewItemState extends State<_DeliverableReviewItem> {
               children: List.generate(5, (index) {
                 final rating = index + 1;
                 final isSelected = (widget.deliverable['managerScore'] ?? 0) == rating;
+                // Only allow managers to score
+                final canScore = widget.isManager && !widget.isReadOnly;
                 return Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -647,7 +666,7 @@ class _DeliverableReviewItemState extends State<_DeliverableReviewItem> {
                       color: isSelected ? const Color(0xFFE67E22) : Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(4),
                       child: InkWell(
-                        onTap: widget.isReadOnly ? null : () => _updateScore('manager', rating),
+                        onTap: canScore ? () => _updateScore('manager', rating) : null,
                         borderRadius: BorderRadius.circular(4),
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -667,6 +686,18 @@ class _DeliverableReviewItemState extends State<_DeliverableReviewItem> {
                 );
               }),
             ),
+            if (!widget.isManager)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Only managers can provide assessment scores',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
