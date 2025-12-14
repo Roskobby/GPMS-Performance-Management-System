@@ -265,7 +265,7 @@ class _BehavioralAssessmentScreenState extends State<BehavioralAssessmentScreen>
                         ),
                         Expanded(
                           child: InkWell(
-                            onTap: () => setState(() => _mode = 'manager'),
+                            onTap: _isManager ? () => setState(() => _mode = 'manager') : null,
                             child: Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
