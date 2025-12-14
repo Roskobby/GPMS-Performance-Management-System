@@ -106,11 +106,10 @@ class AuthService {
     final user = await getCurrentUser();
     if (user == null) return false;
     
-    // Managers have M2 grade or are supervisors (M5)
-    return user.jobGrade.contains('M2') || 
-           user.jobGrade.contains('M5') ||
-           user.designation.contains('Manager') ||
-           user.designation.contains('Supervisor');
+    // A manager is someone who has direct reports
+    // Check if anyone reports to this person
+    final directReports = await getDirectReports();
+    return directReports.isNotEmpty;
   }
 
   // Get employees who report to current user
