@@ -38,6 +38,8 @@ class _KPIReviewScreenState extends State<KPIReviewScreen> {
     setState(() {
       _goals = goals.isEmpty ? _getDefaultGoals() : goals;
       _isLoading = false;
+      // If goals were loaded from storage, they were previously saved
+      _isSaved = goals.isNotEmpty;
     });
   }
 
@@ -119,7 +121,7 @@ class _KPIReviewScreenState extends State<KPIReviewScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('KPI Review saved successfully! You can still edit if needed.'),
+          content: Text('KPI Review saved successfully! Tap Edit to make changes.'),
           backgroundColor: Color(0xFF4CAF50),
           duration: Duration(seconds: 3),
         ),
