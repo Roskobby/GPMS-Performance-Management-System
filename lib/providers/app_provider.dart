@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import '../utils/hive_setup.dart';
 import '../models/employee.dart';
+import '../models/appraisal.dart';
+import '../models/appraisal_status.dart';
+import '../services/appraisal_service.dart';
 
 class AppProvider extends ChangeNotifier {
   Employee? _currentEmployee;
   int _currentYear = DateTime.now().year;
+  Appraisal? _currentAppraisal;
+  final AppraisalService _appraisalService = AppraisalService();
   
   Employee? get currentEmployee => _currentEmployee;
   int get currentYear => _currentYear;
+  Appraisal? get currentAppraisal => _currentAppraisal;
   
   AppProvider() {
     _loadCurrentEmployee();
@@ -26,7 +32,48 @@ class AppProvider extends ChangeNotifier {
   Future<void> setCurrentEmployee(Employee employee) async {
     _currentEmployee = employee;
     await HiveSetup.employeesBox.put('current_employee', employee.toJson());
+    await _loadOrCreateAppraisal();
     notifyListeners();
+  }
+  
+  /// Load or create appraisal for current employee and year
+  Future<void> _loadOrCreateAppraisal() async {
+    if (_currentEmployee == null) return;
+    
+    _currentAppraisal = await _appraisalService.getOrCreateAppraisal(
+      employeeId: _currentEmployee!.id,
+      employeeNumber: _currentEmployee!.employeeNumber,
+      employeeName: _currentEmployee!.name,
+      year: _currentYear,
+    );
+    notifyListeners();
+  }
+  
+  /// Get current appraisal status
+  AppraisalStatus? get currentAppraisalStatus => _currentAppraisal?.status;
+  
+  /// Check if current appraisal can be edited by employee
+  bool get canEmployeeEdit => _currentAppraisal != null && 
+      _appraisalService.canEmployeeEdit(_currentAppraisal!);
+  
+  /// Check if current appraisal is locked
+  bool get isAppraisalLocked => _currentAppraisal != null && 
+      _appraisalService.isLocked(_currentAppraisal!);
+  
+  /// Submit appraisal to manager
+  Future<bool> submitToManager() async {
+    if (_currentAppraisal == null) return false;
+    
+    final success = await _appraisalService.submitToManager(_currentAppraisal!);
+    if (success) {
+      await _loadOrCreateAppraisal();
+    }
+    return success;
+  }
+  
+  /// Refresh appraisal from storage
+  Future<void> refreshAppraisal() async {
+    await _loadOrCreateAppraisal();
   }
   
   void setCurrentYear(int year) {

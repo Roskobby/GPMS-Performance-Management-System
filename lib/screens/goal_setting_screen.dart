@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../widgets/status_badge.dart';
+import '../models/appraisal_status.dart';
+import '../services/appraisal_service.dart';
+import '../models/appraisal.dart';
 
 class GoalSettingScreen extends StatefulWidget {
   const GoalSettingScreen({super.key});
@@ -13,6 +17,9 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
   List<Map<String, dynamic>> _goals = [];
   bool _isLoading = true;
   bool _isSaved = false;
+  bool _isSubmitting = false;
+  Appraisal? _currentAppraisal;
+  final AppraisalService _appraisalService = AppraisalService();
 
   @override
   void initState() {
@@ -23,6 +30,18 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
   Future<void> _loadGoals() async {
     final provider = Provider.of<AppProvider>(context, listen: false);
     final goals = await provider.getGoals();
+    
+    // Load current appraisal status
+    final employee = provider.currentEmployee;
+    final year = provider.currentYear;
+    if (employee != null) {
+      _currentAppraisal = await _appraisalService.getOrCreateAppraisal(
+        employeeId: employee.id,
+        employeeNumber: employee.employeeNumber,
+        employeeName: employee.name,
+        year: year,
+      );
+    }
     
     setState(() {
       _goals = goals.isEmpty ? _getDefaultGoals() : goals;
@@ -133,6 +152,105 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
     });
   }
 
+  Future<void> _submitToManager() async {
+    // Validate goals before submission
+    if (!_validateGoals()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please complete your goals before submitting'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Submit to Manager'),
+        content: const Text(
+          'Are you sure you want to submit your goals to your manager? '
+          'You won\'t be able to edit them until your manager reviews them.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2E86C1),
+            ),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      // Save goals first
+      final provider = Provider.of<AppProvider>(context, listen: false);
+      await provider.saveGoals(_goals);
+
+      // Update appraisal status
+      if (_currentAppraisal != null) {
+        await _appraisalService.submitToManager(_currentAppraisal!);
+        
+        // Reload to get updated status
+        final employee = provider.currentEmployee;
+        final year = provider.currentYear;
+        if (employee != null) {
+          _currentAppraisal = await _appraisalService.getAppraisal(employee.id, year);
+        }
+      }
+
+      setState(() {
+        _isSaved = true;
+        _isSubmitting = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Goals submitted to manager successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isSubmitting = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error submitting goals: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  bool _canSubmit() {
+    return _currentAppraisal?.status == AppraisalStatus.draft && _isSaved;
+  }
+
+  bool _isReadOnly() {
+    return _currentAppraisal?.status != AppraisalStatus.draft;
+  }
+
   void _recalculateAllWeights() {
     // Calculate total priority across ALL deliverables in ALL goals
     int totalPriority = 0;
@@ -168,13 +286,13 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
       appBar: AppBar(
         title: const Text('Goal Setting'),
         actions: [
-          if (_isSaved)
+          if (_isSaved && !_isReadOnly())
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: _enableEditing,
               tooltip: 'Edit Goals',
             ),
-          if (!_isSaved)
+          if (!_isSaved && !_isReadOnly())
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: _saveGoals,
@@ -185,6 +303,39 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
+          // Status Badge
+          if (_currentAppraisal != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: StatusBadge(status: _currentAppraisal!.status),
+            ),
+          
+          // Submit to Manager Button
+          if (_canSubmit())
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: ElevatedButton.icon(
+                onPressed: _isSubmitting ? null : _submitToManager,
+                icon: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.send),
+                label: Text(_isSubmitting ? 'Submitting...' : 'Submit to Manager'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2E86C1),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+              ),
+            ),
+          
           Card(
             color: const Color(0xFFE67E22).withValues(alpha: 0.1),
             child: const Padding(
@@ -226,6 +377,7 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
               goal: goal,
               allGoals: _goals,
               isSaved: _isSaved,
+              isReadOnly: _isReadOnly(),
               onUpdate: (updatedGoal) {
                 setState(() {
                   _goals[index] = updatedGoal;
@@ -237,7 +389,7 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
             );
           }),
           const SizedBox(height: 16),
-          if (!_isSaved)
+          if (!_isSaved && !_isReadOnly())
             ElevatedButton(
               onPressed: _saveGoals,
               child: const Padding(
@@ -256,12 +408,14 @@ class _GoalCard extends StatefulWidget {
   final Function(Map<String, dynamic>) onUpdate;
   final List<Map<String, dynamic>> allGoals;
   final bool isSaved;
+  final bool isReadOnly;
 
   const _GoalCard({
     required this.goal,
     required this.onUpdate,
     required this.allGoals,
     this.isSaved = false,
+    this.isReadOnly = false,
   });
 
   @override
@@ -375,8 +529,8 @@ class _GoalCardState extends State<_GoalCard> {
                     hintText: 'Describe the main objective of this goal',
                   ),
                   maxLines: 2,
-                  enabled: !widget.isSaved,
-                  readOnly: widget.isSaved,
+                  enabled: !widget.isSaved && !widget.isReadOnly,
+                  readOnly: widget.isSaved || widget.isReadOnly,
                   onChanged: (_) => _updateGoal(),
                 ),
                 const SizedBox(height: 16),
@@ -387,7 +541,7 @@ class _GoalCardState extends State<_GoalCard> {
                       'Deliverables',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    if (!widget.isSaved)
+                    if (!widget.isSaved && !widget.isReadOnly)
                       ElevatedButton.icon(
                         onPressed: _addDeliverable,
                         icon: const Icon(Icons.add, size: 18),
@@ -405,6 +559,7 @@ class _GoalCardState extends State<_GoalCard> {
                   return _DeliverableItem(
                     deliverable: deliverable,
                     isSaved: widget.isSaved,
+                    isReadOnly: widget.isReadOnly,
                     onUpdate: (updated) {
                       final deliverables = List<Map<String, dynamic>>.from(
                         widget.goal['deliverables'],
@@ -436,12 +591,14 @@ class _DeliverableItem extends StatefulWidget {
   final Function(Map<String, dynamic>) onUpdate;
   final VoidCallback? onDelete;
   final bool isSaved;
+  final bool isReadOnly;
 
   const _DeliverableItem({
     required this.deliverable,
     required this.onUpdate,
     this.onDelete,
     this.isSaved = false,
+    this.isReadOnly = false,
   });
 
   @override
@@ -516,7 +673,7 @@ class _DeliverableItemState extends State<_DeliverableItem> {
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
-                if (widget.onDelete != null && !widget.isSaved) ...[
+                if (widget.onDelete != null && !widget.isSaved && !widget.isReadOnly) ...[
                   IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red, size: 20),
                     onPressed: widget.onDelete,
@@ -541,7 +698,7 @@ class _DeliverableItemState extends State<_DeliverableItem> {
                     child: ChoiceChip(
                       label: Text('$priority'),
                       selected: isSelected,
-                      onSelected: widget.isSaved ? null : (selected) {
+                      onSelected: (widget.isSaved || widget.isReadOnly) ? null : (selected) {
                         if (selected) {
                           _updatePriority(priority);
                         }
@@ -575,8 +732,8 @@ class _DeliverableItemState extends State<_DeliverableItem> {
                 hintText: 'What needs to be delivered?',
               ),
               maxLines: 2,
-              enabled: !widget.isSaved,
-              readOnly: widget.isSaved,
+              enabled: !widget.isSaved && !widget.isReadOnly,
+              readOnly: widget.isSaved || widget.isReadOnly,
               onChanged: (_) => _updateDeliverable(),
             ),
             const SizedBox(height: 8),
@@ -589,8 +746,8 @@ class _DeliverableItemState extends State<_DeliverableItem> {
                 hintText: 'What does success look like?',
               ),
               maxLines: 2,
-              enabled: !widget.isSaved,
-              readOnly: widget.isSaved,
+              enabled: !widget.isSaved && !widget.isReadOnly,
+              readOnly: widget.isSaved || widget.isReadOnly,
               onChanged: (_) => _updateDeliverable(),
             ),
             const SizedBox(height: 8),

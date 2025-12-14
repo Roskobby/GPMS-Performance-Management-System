@@ -1,43 +1,44 @@
-
+import 'appraisal_status.dart';
 
 class Appraisal {
   String id;
-
   String employeeId;
-
+  String employeeNumber;
+  String employeeName;
   int year;
-
   DateTime reviewPeriodStart;
-
   DateTime reviewPeriodEnd;
-
   AppraisalStatus status;
-
+  
   String behavioralStandardId;
-
   List<String> goalIds;
-
   String professionalDevelopmentId;
-
+  
   double behavioralScore; // 30% weight
-
   double kpiScore; // 70% weight
-
   double overallScore;
-
+  
   String employeeComments;
-
   String managerComments;
-
-  DateTime? submittedDate;
-
-  DateTime? approvedDate;
-
+  
+  // Workflow timestamps
+  DateTime createdAt;
+  DateTime? submittedToManagerAt;
+  DateTime? managerStartedReviewAt;
+  DateTime? submittedToHRAt;
+  
+  // Manager information
+  String? reviewedByManagerId;
+  String? reviewedByManagerName;
+  String? reviewedByManagerNumber;
+  
   String? disciplinaryNotes;
 
   Appraisal({
     required this.id,
     required this.employeeId,
+    required this.employeeNumber,
+    required this.employeeName,
     required this.year,
     required this.reviewPeriodStart,
     required this.reviewPeriodEnd,
@@ -50,10 +51,15 @@ class Appraisal {
     this.overallScore = 0.0,
     this.employeeComments = '',
     this.managerComments = '',
-    this.submittedDate,
-    this.approvedDate,
+    DateTime? createdAt,
+    this.submittedToManagerAt,
+    this.managerStartedReviewAt,
+    this.submittedToHRAt,
+    this.reviewedByManagerId,
+    this.reviewedByManagerName,
+    this.reviewedByManagerNumber,
     this.disciplinaryNotes,
-  });
+  }) : createdAt = createdAt ?? DateTime.now();
 
   void calculateOverallScore() {
     overallScore = behavioralScore + kpiScore;
@@ -71,10 +77,12 @@ class Appraisal {
     return {
       'id': id,
       'employeeId': employeeId,
+      'employeeNumber': employeeNumber,
+      'employeeName': employeeName,
       'year': year,
       'reviewPeriodStart': reviewPeriodStart.toIso8601String(),
       'reviewPeriodEnd': reviewPeriodEnd.toIso8601String(),
-      'status': status.toString(),
+      'status': status.toStorageString(),
       'behavioralStandardId': behavioralStandardId,
       'goalIds': goalIds,
       'professionalDevelopmentId': professionalDevelopmentId,
@@ -83,8 +91,13 @@ class Appraisal {
       'overallScore': overallScore,
       'employeeComments': employeeComments,
       'managerComments': managerComments,
-      'submittedDate': submittedDate?.toIso8601String(),
-      'approvedDate': approvedDate?.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
+      'submittedToManagerAt': submittedToManagerAt?.toIso8601String(),
+      'managerStartedReviewAt': managerStartedReviewAt?.toIso8601String(),
+      'submittedToHRAt': submittedToHRAt?.toIso8601String(),
+      'reviewedByManagerId': reviewedByManagerId,
+      'reviewedByManagerName': reviewedByManagerName,
+      'reviewedByManagerNumber': reviewedByManagerNumber,
       'disciplinaryNotes': disciplinaryNotes,
     };
   }
@@ -93,12 +106,13 @@ class Appraisal {
     return Appraisal(
       id: json['id'] as String,
       employeeId: json['employeeId'] as String,
+      employeeNumber: json['employeeNumber'] as String? ?? '',
+      employeeName: json['employeeName'] as String? ?? '',
       year: json['year'] as int,
       reviewPeriodStart: DateTime.parse(json['reviewPeriodStart'] as String),
       reviewPeriodEnd: DateTime.parse(json['reviewPeriodEnd'] as String),
-      status: AppraisalStatus.values.firstWhere(
-        (e) => e.toString() == json['status'],
-        orElse: () => AppraisalStatus.draft,
+      status: AppraisalStatusExtension.fromString(
+        json['status'] as String? ?? 'draft',
       ),
       behavioralStandardId: json['behavioralStandardId'] as String,
       goalIds: (json['goalIds'] as List?)?.cast<String>() ?? [],
@@ -108,27 +122,22 @@ class Appraisal {
       overallScore: (json['overallScore'] as num?)?.toDouble() ?? 0.0,
       employeeComments: json['employeeComments'] as String? ?? '',
       managerComments: json['managerComments'] as String? ?? '',
-      submittedDate: json['submittedDate'] != null
-          ? DateTime.parse(json['submittedDate'] as String)
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+      submittedToManagerAt: json['submittedToManagerAt'] != null
+          ? DateTime.parse(json['submittedToManagerAt'] as String)
           : null,
-      approvedDate: json['approvedDate'] != null
-          ? DateTime.parse(json['approvedDate'] as String)
+      managerStartedReviewAt: json['managerStartedReviewAt'] != null
+          ? DateTime.parse(json['managerStartedReviewAt'] as String)
           : null,
+      submittedToHRAt: json['submittedToHRAt'] != null
+          ? DateTime.parse(json['submittedToHRAt'] as String)
+          : null,
+      reviewedByManagerId: json['reviewedByManagerId'] as String?,
+      reviewedByManagerName: json['reviewedByManagerName'] as String?,
+      reviewedByManagerNumber: json['reviewedByManagerNumber'] as String?,
       disciplinaryNotes: json['disciplinaryNotes'] as String?,
     );
   }
-}
-
-enum AppraisalStatus {
-  draft,
-
-  selfAssessmentComplete,
-
-  submitted,
-
-  managerReview,
-
-  completed,
-
-  archived,
 }
